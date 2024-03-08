@@ -1,0 +1,28 @@
+# Ignore compiled Haskell files and executables
+dist/
+dist-*/
+cabal.project.local
+*.hi
+*.o
+*.dyn_hi
+*.dyn_o
+
+# Ignore Cabal build artifacts
+.cabal-sandbox/
+.cabal-sandbox-*/
+
+# Ignore stack-related files (if using Stack)
+stack.yaml
+.stack-work/
+
+# Ignore Haddock documentation files
+*.haddock
+
+# Ignore GHC configuration files
+cabal.project.local
+
+# Ignore editor/IDE-specific files
+*.swp
+.vscode/
+.idea/
+*.iml

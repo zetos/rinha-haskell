@@ -1,0 +1,7 @@
+cradle:
+  cabal:
+
+defaults:
+  - "-XRecordWildCards"
+  - "-XNamedFieldPuns"
+  - "-OverloadedStrings"
