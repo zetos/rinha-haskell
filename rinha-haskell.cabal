@@ -73,9 +73,7 @@ executable rinha-haskell
                       scotty,
                       aeson,
                       text,
-                      bytestring,
-                      postgresql-simple,
-                      resource-pool
+                      bytestring
 
 
     -- Directories containing source files.
