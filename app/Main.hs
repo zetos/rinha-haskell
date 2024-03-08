@@ -1,10 +1,10 @@
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-import           Data.Aeson         (FromJSON, ToJSON, decode)
-import           Data.Text.Lazy     (Text, length, pack)
--- import qualified Data.Text.Lazy     as TL
-
+import           Data.Aeson                 (FromJSON, ToJSON, decode)
+import           Data.Pool                  (Pool, createPool, withResource)
+import           Data.Text.Lazy             (Text, length, pack)
+import           Database.PostgreSQL.Simple
 import           GHC.Generics
 import           Network.HTTP.Types
 import           Web.Scotty
@@ -56,31 +56,42 @@ validateTransaction transaction
   | otherwise = Right transaction
 
 main :: IO ()
-main = scotty 3000 $ do
-  get "/clientes/:id/extrato" $ do
-    -- clientId <- pathParam "id"
-    -- json $ object ["message" .= String ("Hello, " <> clientId <> "!")]
-    json $ AccountInfo {
-      saldo = Saldo { total = 666, data_extrato = "foo", limite = 9000 },
-      ultimas_transacoes = [
-        Transaction {
-           valor = 10,
-           tipo = 'd',
-           descricao = "descrip..",
-           realizada_em = Just "foobar"
-            }
-        ]
-      }
+main = do
+  let connectInfo = defaultConnectInfo
+        { connectHost = "localhost"
+        , connectPort = 5432
+        , connectUser = "username"
+        , connectPassword = "password"
+        , connectDatabase = "database"
+        }
 
-  post "/clientes/:id/transacoes" $ do
-    bodyBytes <- body
-    case (decode bodyBytes :: Maybe Transaction) of
-      Just transaction ->
-        case validateTransaction transaction of
-          Right validatedTransaction -> json validatedTransaction
-          Left errorText -> do
-            status status400
-            text errorText
-      Nothing -> do
-        status status400
-        text "Failed to parse JSON"
+  pool <- createConnectionPool connectInfo
+
+  scotty 3000 $ do
+    get "/clientes/:id/extrato" $ do
+      -- clientId <- pathParam "id"
+      -- json $ object ["message" .= String ("Hello, " <> clientId <> "!")]
+      json $ AccountInfo {
+        saldo = Saldo { total = 666, data_extrato = "foo", limite = 9000 },
+        ultimas_transacoes = [
+          Transaction {
+             valor = 10,
+             tipo = 'd',
+             descricao = "descrip..",
+             realizada_em = Just "foobar"
+              }
+          ]
+        }
+
+    post "/clientes/:id/transacoes" $ do
+      bodyBytes <- body
+      case (decode bodyBytes :: Maybe Transaction) of
+        Just transaction ->
+          case validateTransaction transaction of
+            Right validatedTransaction -> json validatedTransaction
+            Left errorText -> do
+              status status400
+              text errorText
+        Nothing -> do
+          status status400
+          text "Failed to parse JSON"
