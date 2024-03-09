@@ -30,8 +30,6 @@ import           Network.HTTP.Types
 import           Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import           Web.Scotty
 
-
-
 data Transaction = Transaction
   { valor        :: Int,
     tipo         :: Char,
@@ -92,6 +90,17 @@ instance FromJSON AccountInfo
 
 instance ToJSON AccountInfo
 
+data UpdateResult = UpdateResult {
+  saldo  :: Int,
+  limite :: Int
+  }
+  deriving (Show, Generic)
+  deriving anyclass (FromRow)
+
+instance FromJSON UpdateResult
+
+instance ToJSON UpdateResult
+
 -- DB
 
 createConnectionPool :: ConnectInfo -> IO (Pool Connection)
@@ -120,6 +129,19 @@ getBalance conn clientId = query conn [sql|
           WHERE c.id = ?
           GROUP BY c.bal, c.lim
         |] (clientId, clientId)
+
+transactionUpdateBalance :: Connection -> Int -> String -> Int -> Text -> IO [UpdateResult]
+transactionUpdateBalance conn clientId typeT amount description = query conn [sql|
+    WITH inserted_transaction AS (
+      INSERT INTO transaction (cid, amount, type, descr)
+      VALUES (?, ?, ?, ?)
+      RETURNING *
+    )
+    UPDATE client
+    SET bal = bal + CASE WHEN ? = 'd' THEN -? ELSE ? END
+    WHERE id = ?
+    RETURNING bal, lim
+  |] (clientId, amount, typeT, description, typeT, amount, amount, clientId)
 
 -- validation
 
@@ -151,19 +173,28 @@ main = do
 
       case result of
         Left err -> liftIO $ putStrLn $ "Error executing query: " ++ show (err :: SomeException)
-        Right transactions -> do
-          if null transactions
+        Right extract -> do
+          if null extract
             then status status404
-            else json (head transactions)
+            else json (head extract)
 
     post "/clientes/:id/transacoes" $ do
+      clientId <- pathParam "id"
       bodyBytes <- body
       case (decode bodyBytes :: Maybe Transaction) of
         Just transaction ->
           case validateTransaction transaction of
             Right validatedTransaction -> do
-              -- insertStuff pool
-              json validatedTransaction
+              result <- liftIO $ try $ withResource pool $ \conn ->
+                      transactionUpdateBalance conn clientId [(tipo validatedTransaction)] (valor validatedTransaction) (descricao validatedTransaction)
+
+              case result of
+                Left (_ :: SomeException) -> status status422
+                Right transactions -> do
+                  if null (traceShowId transactions)
+                    then status status404
+                    else json (head transactions)
+              -- json validatedTransaction
             Left errorText -> do
               status status400
               text errorText
