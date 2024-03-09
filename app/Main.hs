@@ -7,7 +7,7 @@
 
 import           Data.Aeson                           (FromJSON, ToJSON,
                                                        Value (..), decode,
-                                                       object, (.=))
+                                                       object, toJSON, (.=))
 import           Data.Pool                            (Pool, PoolConfig,
                                                        createPool,
                                                        defaultPoolConfig,
@@ -47,19 +47,23 @@ data BalanceAndTransactions = BalanceAndTransactions {
   bal          :: Int,
   lim          :: Int,
   current_time :: Text,
-  transactions :: [Transaction]
+  transactions :: Value
 }
   deriving (Show, Generic)
+
+-- instance FromRow BalanceAndTransactions where
+--   fromRow = BalanceAndTransactions
+--     <$> field
+--     <*> field
+--     <*> (pack <$> (formatTime defaultTimeLocale "%Y-%m-%d %H:%M:%S" :: UTCTime -> String) <$> field)
+--     <*> (toJSON <$> liftM4 Transaction field field field field)
 
 instance FromRow BalanceAndTransactions where
   fromRow = BalanceAndTransactions
     <$> field
     <*> field
     <*> (pack <$> (formatTime defaultTimeLocale "%Y-%m-%d %H:%M:%S" :: UTCTime -> String) <$> field)
-    <*> (fmap (:[]) $ liftM4 Transaction field field field field)
-
--- instance FromRow BalanceAndTransactions where
---   fromRow = BalanceAndTransactions <$> field <*> field <*> field <*> ((:[]) <$> liftM4 Transaction field field field field)
+    <*> field
 
 instance FromJSON BalanceAndTransactions
 
@@ -140,15 +144,13 @@ main = do
     middleware logStdoutDev -- Add this line to enable request logging
 
     get "/clientes/:id/extrato" $ do
-      -- In a real scenario, you would retrieve the clientId from the request parameters
-      let clientId = 2 :: Int
+      clientId <- pathParam "id"
       result <- liftIO $ try $ withResource pool $ \conn ->
         getBalance conn clientId
 
       case result of
         Left err -> liftIO $ putStrLn $ "Error executing query: " ++ show (err :: SomeException)
-        -- Right transactions -> json $ parseTransactions transactions
-        Right transactions -> json $ object [ "name" .= String "name", "age" .= Number 123]
+        Right transactions -> json (transactions !! 0)
 
     post "/clientes/:id/transacoes" $ do
       bodyBytes <- body
