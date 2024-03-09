@@ -3,7 +3,8 @@
 
 import           Data.Aeson                 (FromJSON, ToJSON, decode)
 import           Data.Pool                  (Pool, PoolConfig, createPool,
-                                             newPool, withResource)
+                                             defaultPoolConfig, newPool,
+                                             withResource)
 import           Data.Text.Lazy             (Text, length, pack)
 import           Database.PostgreSQL.Simple
 import           GHC.Generics
@@ -46,9 +47,11 @@ instance ToJSON AccountInfo
 
 -- DB
 
+
 createConnectionPool :: ConnectInfo -> IO (Pool Connection)
-createConnectionPool connectInfo =
-  createPool (connect connectInfo) close 2 60 10
+createConnectionPool connectInfo = do
+  let poolConfig = defaultPoolConfig (connect connectInfo) close 60 10
+  newPool poolConfig
 
 validateTransaction :: Transaction -> Either Text Transaction
 validateTransaction transaction
