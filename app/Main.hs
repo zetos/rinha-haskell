@@ -7,20 +7,15 @@
 
 
 import           Data.Aeson                           (FromJSON, ToJSON,
-                                                       Value (..), decode,
-                                                       object, toJSON, (.=))
-import           Data.Pool                            (Pool, PoolConfig,
-                                                       createPool,
-                                                       defaultPoolConfig,
+                                                       Value (..), decode)
+import           Data.Pool                            (Pool, defaultPoolConfig,
                                                        newPool, withResource)
 import           Data.Text.Lazy                       (Text, length, pack)
 import           Database.PostgreSQL.Simple
 import           Database.PostgreSQL.Simple.FromRow
 import           Database.PostgreSQL.Simple.SqlQQ     (sql)
-import           Database.PostgreSQL.Simple.Time
 
 import           Control.Exception                    (SomeException, try)
-import           Control.Monad
 import           Data.Time.Clock                      (UTCTime)
 import           Data.Time.Format                     (defaultTimeLocale,
                                                        formatTime)
@@ -194,7 +189,6 @@ main = do
                   if null (traceShowId transactions)
                     then status status404
                     else json (head transactions)
-              -- json validatedTransaction
             Left errorText -> do
               status status400
               text errorText
