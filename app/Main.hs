@@ -23,11 +23,11 @@ import           Control.Monad
 import           Data.Time.Clock                      (UTCTime)
 import           Data.Time.Format                     (defaultTimeLocale,
                                                        formatTime)
+import           Debug.Trace                          (traceShowId)
 import           GHC.Generics
 import           Network.HTTP.Types
 import           Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import           Web.Scotty
-
 
 
 data Transaction = Transaction
@@ -150,7 +150,10 @@ main = do
 
       case result of
         Left err -> liftIO $ putStrLn $ "Error executing query: " ++ show (err :: SomeException)
-        Right transactions -> json (transactions !! 0)
+        Right transactions -> do
+          if null transactions
+            then status status404
+            else json (head transactions)
 
     post "/clientes/:id/transacoes" $ do
       bodyBytes <- body
