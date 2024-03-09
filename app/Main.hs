@@ -1,10 +1,11 @@
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-import           Data.Aeson         (FromJSON, ToJSON, decode)
--- import           Data.Pool                  (Pool, createPool, withResource)
-import           Data.Text.Lazy     (Text, length, pack)
--- import           Database.PostgreSQL.Simple
+import           Data.Aeson                 (FromJSON, ToJSON, decode)
+import           Data.Pool                  (Pool, PoolConfig, createPool,
+                                             newPool, withResource)
+import           Data.Text.Lazy             (Text, length, pack)
+import           Database.PostgreSQL.Simple
 import           GHC.Generics
 import           Network.HTTP.Types
 import           Web.Scotty
@@ -45,9 +46,9 @@ instance ToJSON AccountInfo
 
 -- DB
 
--- createConnectionPool :: ConnectInfo -> IO (Pool Connection)
--- createConnectionPool connectInfo = do
---   createPool (connect connectInfo) close 1 10 10
+createConnectionPool :: ConnectInfo -> IO (Pool Connection)
+createConnectionPool connectInfo =
+  createPool (connect connectInfo) close 2 60 10
 
 validateTransaction :: Transaction -> Either Text Transaction
 validateTransaction transaction
@@ -57,15 +58,15 @@ validateTransaction transaction
 
 main :: IO ()
 main = do
-  -- let connectInfo = defaultConnectInfo
-  --       { connectHost = "localhost"
-  --       , connectPort = 5432
-  --       , connectUser = "admin"
-  --       , connectPassword = "123"
-  --       , connectDatabase = "rinha"
-  --       }
+  let connectInfo = defaultConnectInfo
+        { connectHost = "localhost"
+        , connectPort = 5432
+        , connectUser = "admin"
+        , connectPassword = "123"
+        , connectDatabase = "rinha"
+        }
 
-  -- pool <- createConnectionPool connectInfo
+  pool <- createConnectionPool connectInfo
 
   scotty 8080 $ do
     get "/clientes/:id/extrato" $ do
