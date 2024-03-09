@@ -1,8 +1,9 @@
-{-# LANGUAGE DeriveAnyClass     #-}
-{-# LANGUAGE DeriveGeneric      #-}
-{-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE OverloadedStrings  #-}
-{-# LANGUAGE QuasiQuotes        #-}
+{-# LANGUAGE DeriveAnyClass        #-}
+{-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE DerivingStrategies    #-}
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes           #-}
 
 
 import           Data.Aeson                           (FromJSON, ToJSON,
@@ -30,6 +31,7 @@ import           Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import           Web.Scotty
 
 
+
 data Transaction = Transaction
   { valor        :: Int,
     tipo         :: Char,
@@ -44,10 +46,10 @@ instance FromJSON Transaction
 instance ToJSON Transaction
 
 data BalanceAndTransactions = BalanceAndTransactions {
-  bal          :: Int,
-  lim          :: Int,
-  current_time :: Text,
-  transactions :: Value
+  total              :: Int,
+  limite             :: Int,
+  data_extrato       :: Text,
+  ultimas_transacoes :: Value
 }
   deriving (Show, Generic)
 
@@ -62,7 +64,7 @@ instance FromRow BalanceAndTransactions where
   fromRow = BalanceAndTransactions
     <$> field
     <*> field
-    <*> (pack <$> (formatTime defaultTimeLocale "%Y-%m-%d %H:%M:%S" :: UTCTime -> String) <$> field)
+    <*> (pack <$> (formatTime defaultTimeLocale "%FT%T%QZ" :: UTCTime -> String) <$> field)
     <*> field
 
 instance FromJSON BalanceAndTransactions
@@ -91,7 +93,6 @@ instance FromJSON AccountInfo
 instance ToJSON AccountInfo
 
 -- DB
-
 
 createConnectionPool :: ConnectInfo -> IO (Pool Connection)
 createConnectionPool connectInfo = do
