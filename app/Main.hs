@@ -9,7 +9,7 @@ import           Control.Exception          (SomeException, try)
 import           Data.Aeson                 (FromJSON, ToJSON, Value (..),
                                              decode, object, (.=))
 import           Data.Pool                  (withResource)
-import           Data.Text.Lazy             (Text, length)
+import           Data.Text.Lazy             as TL (Text, length)
 import           Database.PostgreSQL.Simple
 import qualified Db                         (BalanceAndTransactions (..),
                                              getBalance, getConnectionPool,
@@ -36,7 +36,7 @@ instance ToJSON Transaction
 validateTransaction :: Transaction -> Either Text Transaction
 validateTransaction transaction
   | notElem (tipo transaction) ['c', 'd'] = Left "tipo must be either 'c' or 'd'"
-  | Data.Text.Lazy.length (descricao transaction) > 10 = Left "descricao cannot exceed 10 characters"
+  | TL.length (descricao transaction) > 10 || TL.length (descricao transaction) < 1 = Left "descricao cannot exceed 10 characters"
   | otherwise = Right transaction
 
 formatResponse :: Db.BalanceAndTransactions -> Value
