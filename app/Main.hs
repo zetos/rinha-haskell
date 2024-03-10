@@ -53,7 +53,9 @@ main = do
         Left err -> liftIO $ putStrLn $ "Error executing query: " ++ show (err :: SomeException)
         Right extract -> do
           if null extract
-            then status status404
+            then do
+              status status404
+              text "Client not found"
             else json (head extract)
 
     post "/clientes/:id/transacoes" $ do
@@ -67,10 +69,14 @@ main = do
                       Db.transactionUpdateBalance conn clientId [(tipo validatedTransaction)] (valor validatedTransaction) (descricao validatedTransaction)
 
               case result of
-                Left (_ :: SomeException) -> status status422
+                Left (_ :: SomeException) -> do
+                  status status422
+                  text "This transaction exceeds the limit"
                 Right transactions -> do
                   if null transactions
-                    then status status404
+                    then do
+                      status status404
+                      text "Client not found"
                     else json (head transactions)
             Left errorText -> do
               status status400
