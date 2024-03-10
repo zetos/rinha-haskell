@@ -2,7 +2,7 @@
 
 API built for the [backend rinha](https://github.com/zanfranceschi/rinha-de-backend-2024-q1)
 
-> My first API in haskell
+> My first API in haskell 🩸
 
 Summary:
 
