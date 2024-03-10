@@ -74,10 +74,8 @@ executable rinha-haskell
                       scotty,
                       aeson,
                       text,
-                      bytestring,
                       postgresql-simple,
                       resource-pool,
-                      unliftio-core,
                       time
 
 
