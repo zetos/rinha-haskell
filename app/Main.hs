@@ -6,11 +6,13 @@
 
 
 import           Control.Exception          (SomeException, try)
-import           Data.Aeson                 (FromJSON, ToJSON, decode)
+import           Data.Aeson                 (FromJSON, ToJSON, Value (..),
+                                             decode, object, (.=))
 import           Data.Pool                  (withResource)
 import           Data.Text.Lazy             (Text, length)
 import           Database.PostgreSQL.Simple
-import qualified Db                         (getBalance, getConnectionPool,
+import qualified Db                         (BalanceAndTransactions (..),
+                                             getBalance, getConnectionPool,
                                              transactionUpdateBalance)
 -- import           Debug.Trace                          (traceShowId)
 import           GHC.Generics
@@ -37,6 +39,17 @@ validateTransaction transaction
   | Data.Text.Lazy.length (descricao transaction) > 10 = Left "descricao cannot exceed 10 characters"
   | otherwise = Right transaction
 
+formatResponse :: Db.BalanceAndTransactions -> Value
+formatResponse extract =
+  object
+    [ "saldo" .= object
+        [ "total" .= Db.total extract,
+          "data_extrato" .= Db.data_extrato extract,
+          "limite" .= Db.limite extract
+        ],
+      "ultimas_transacoes" .= Db.ultimas_transacoes extract
+    ]
+
 main :: IO ()
 main = do
   pool <- Db.getConnectionPool
@@ -56,7 +69,8 @@ main = do
             then do
               status status404
               text "Client not found"
-            else json (head extract)
+            else
+              json $ formatResponse (head extract)
 
     post "/clientes/:id/transacoes" $ do
       clientId <- pathParam "id"

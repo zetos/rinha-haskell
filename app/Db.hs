@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE QuasiQuotes           #-}
 
-module Db (createConnectionPool, getBalance, transactionUpdateBalance, getConnectionPool) where
+module Db (createConnectionPool, getBalance, transactionUpdateBalance, getConnectionPool, BalanceAndTransactions(..)) where
 
 import           Data.Aeson                         (FromJSON, ToJSON,
                                                      Value (..))
@@ -21,6 +21,13 @@ import           Data.Time.Format                   (defaultTimeLocale,
                                                      formatTime)
 import           GHC.Generics
 
+-- instance FromRow BalanceAndTransactions where
+--   fromRow = BalanceAndTransactions
+--     <$> field
+--     <*> field
+--     <*> (pack <$> (formatTime defaultTimeLocale "%Y-%m-%d %H:%M:%S" :: UTCTime -> String) <$> field)
+--     <*> (toJSON <$> liftM4 Transaction field field field field)
+
 data BalanceAndTransactions = BalanceAndTransactions {
   total              :: Int,
   limite             :: Int,
@@ -28,13 +35,6 @@ data BalanceAndTransactions = BalanceAndTransactions {
   ultimas_transacoes :: Value
 }
   deriving (Show, Generic)
-
--- instance FromRow BalanceAndTransactions where
---   fromRow = BalanceAndTransactions
---     <$> field
---     <*> field
---     <*> (pack <$> (formatTime defaultTimeLocale "%Y-%m-%d %H:%M:%S" :: UTCTime -> String) <$> field)
---     <*> (toJSON <$> liftM4 Transaction field field field field)
 
 instance FromRow BalanceAndTransactions where
   fromRow = BalanceAndTransactions
