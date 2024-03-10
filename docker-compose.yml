@@ -52,13 +52,11 @@ services:
       - "5432:5432"
     volumes:
       - ./script.sql:/docker-entrypoint-initdb.d/script.sql
+      - ./postgres.conf:/etc/postgres.conf:ro
+    command: postgres -c config_file=/etc/postgres.conf
     deploy:
       resources:
         limits:
-          # Note que a soma de todos os limites dos serviços
-          # aqui declarados é de 1.5 unidades de CPU e 550MB
-          # de memória. A distribuição feita aqui é apenas
-          # um exemplo – distribua como quiser.
           cpus: "1.0"
           memory: "340MB"
 
